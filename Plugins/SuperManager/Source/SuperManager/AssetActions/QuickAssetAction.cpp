@@ -17,14 +17,14 @@ void UQuickAssetAction::DuplicateAssets(int32 NumOfDuplicates)
 {
 	if(NumOfDuplicates <= 0)
 	{
-		Print(TEXT("Number of duplicates must be greater than 0"), FColor::Red);
+		ShowMessageDialog(EAppMsgType::Ok,TEXT("Please enter a VALID number"));
 		return;
 	}
 
 	TArray<FAssetData> SelectedAssetsData =  UEditorUtilityLibrary::GetSelectedAssetData();
 	uint32 Counter = 0;
 
-
+	
 	for (const FAssetData& SelectedAssetData : SelectedAssetsData)
 	{
 		for (int32 i = 0; i < NumOfDuplicates; i++)
@@ -43,6 +43,7 @@ void UQuickAssetAction::DuplicateAssets(int32 NumOfDuplicates)
 
 	if (Counter>0)
 	{
-		Print(TEXT("Successfully duplicated " + FString::FromInt(Counter) + " files"), FColor::Green);
+		ShowNotifyInfo(TEXT("Successfully duplicated " + FString::FromInt(Counter) + " files"));
+		//Print(TEXT("Successfully duplicated " + FString::FromInt(Counter) + " files"), FColor::Green);
 	}
 }
