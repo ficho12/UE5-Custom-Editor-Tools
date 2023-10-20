@@ -17,8 +17,8 @@
 	"Modules": [
 		{
 			"Name": "SuperManager",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"Type": "Editor",
+			"LoadingPhase": "PreDefault"
 		}
 	]
 }
