@@ -5,6 +5,7 @@
 #include "DebugHeader.h"
 #include "EditorAssetLibrary.h"
 #include "EditorUtilityLibrary.h"
+#include "ObjectTools.h"
 
 
 //void UQuickAssetAction::TestFunc()
@@ -88,4 +89,33 @@ void UQuickAssetAction::AddPrefixes()
 	{
 		ShowNotifyInfo(TEXT("Successfully renamed " + FString::FromInt(Counter) + " assets"));
 	}
+}
+
+void UQuickAssetAction::RemoveUnusedAssets()
+{
+	TArray<FAssetData> SelectedAssetsData = UEditorUtilityLibrary::GetSelectedAssetData();
+	TArray<FAssetData> UnusedAssetsData;
+
+	for (const FAssetData& SeletedAssetData:SelectedAssetsData)
+	{
+		TArray<FString> AssetReferencers =
+		UEditorAssetLibrary::FindPackageReferencersForAsset(SeletedAssetData.ObjectPath.ToString());
+
+		if (AssetReferencers.Num() == 0)
+		{
+			UnusedAssetsData.Add(SeletedAssetData);
+		}
+	}
+
+	if (UnusedAssetsData.Num() == 0)
+	{
+		ShowMessageDialog(EAppMsgType::Ok, TEXT("No unused assets found among selected assets"), false);
+		return;
+	}
+
+	int32 NumOfAssetsDeleted = ObjectTools::DeleteAssets(UnusedAssetsData, true);
+
+	if (NumOfAssetsDeleted == 0) return;
+	
+	ShowNotifyInfo(TEXT("Successfully deleted " + FString::FromInt(NumOfAssetsDeleted) + " assets"));
 }
