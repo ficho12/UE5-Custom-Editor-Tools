@@ -93,6 +93,48 @@ void UQuickAssetAction::AddPrefixes()
 	}
 }
 
+void UQuickAssetAction::AddPrefixesToAssetArray(TArray<UObject*>SelectedObjects)
+{
+	//TArray<UObject*>SelectedObjects = UEditorUtilityLibrary::GetSelectedAssets();
+	uint32 Counter = 0;
+
+	for (UObject* SelectedObject : SelectedObjects)
+	{
+		if (!SelectedObject) continue;
+
+		FString* PrefixFound = PrefixMap.Find(SelectedObject->GetClass());
+
+		if (!PrefixFound || PrefixFound->IsEmpty())
+		{
+			Print(TEXT("Failed to find prefix for class ") + SelectedObject->GetClass()->GetName(), FColor::Cyan);
+			continue;
+		}
+
+		FString OldName = SelectedObject->GetName();
+
+		if (OldName.StartsWith(*PrefixFound))
+		{
+			Print(TEXT(" already has prefix added"), FColor::Red);
+			continue;
+		}
+
+		if (SelectedObject->IsA<UMaterialInstanceConstant>())
+		{
+			OldName.RemoveFromStart(TEXT("M_"));
+			OldName.RemoveFromEnd(TEXT("_Inst"));
+		}
+
+		const FString NewNameWithPrefix = *PrefixFound + OldName;
+
+		UEditorUtilityLibrary::RenameAsset(SelectedObject, NewNameWithPrefix);
+		Counter++;
+	}
+	if (Counter > 0)
+	{
+		ShowNotifyInfo(TEXT("Successfully renamed " + FString::FromInt(Counter) + " assets"));
+	}
+}
+
 void UQuickAssetAction::RemoveUnusedAssets()
 {
 	TArray<FAssetData> SelectedAssetsData = UEditorUtilityLibrary::GetSelectedAssetData();
@@ -122,6 +164,29 @@ void UQuickAssetAction::RemoveUnusedAssets()
 	if (NumOfAssetsDeleted == 0) return;
 	
 	ShowNotifyInfo(TEXT("Successfully deleted " + FString::FromInt(NumOfAssetsDeleted) + " assets"));
+}
+
+void UQuickAssetAction::BatchRename(FString NewName)
+{
+	TArray<UObject*>SelectedObjects = UEditorUtilityLibrary::GetSelectedAssets();
+	uint32 Counter = 1;
+
+	if (NewName.IsEmpty())
+	{
+		ShowMessageDialog(EAppMsgType::Ok, TEXT("Please enter a non-empty name"));
+		return;
+	}
+
+	for (UObject* SelectedObject : SelectedObjects)
+	{
+		const FString OldName = SelectedObject->GetName();
+		//const FString NewName = OldName.Replace(TEXT(" "), TEXT("_"));
+
+		UEditorUtilityLibrary::RenameAsset(SelectedObject, NewName + "_" + FString::FromInt(Counter));
+		Counter++;
+	}
+
+	AddPrefixesToAssetArray(SelectedObjects);
 }
 
 void UQuickAssetAction::FixUpRedirectors()

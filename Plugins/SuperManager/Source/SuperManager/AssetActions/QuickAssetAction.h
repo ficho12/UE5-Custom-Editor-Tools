@@ -35,6 +35,9 @@ public:
 	UFUNCTION(CallInEditor)
 	void RemoveUnusedAssets();
 
+	UFUNCTION(CallInEditor)
+	void BatchRename(FString NewName);
+
 private:
 	TMap<UClass*, FString>PrefixMap =
 	{
@@ -56,4 +59,7 @@ private:
 	};
 
 	void FixUpRedirectors();
+
+	void AddPrefixesToAssetArray(TArray<UObject*>SelectedObjects);
+
 };
