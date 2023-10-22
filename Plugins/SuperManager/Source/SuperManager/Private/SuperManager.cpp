@@ -24,20 +24,25 @@
 		FContentBrowserModule& ContentBrowserModule =
 			FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
 
+		// Get hold of all the menu extenders
 		TArray<FContentBrowserMenuExtender_SelectedPaths>& ContentBrowserModuleMenuExtender =
 			ContentBrowserModule.GetAllPathViewContextMenuExtenders();
 
+		//This is a more understandanble way to add to do this
 		/*FContentBrowserMenuExtender_SelectedPaths CustomCBMenuDelegate;
 
 		CustomCBMenuDelegate.BindRaw(this, &FSuperManagerModule::CustomCBMenuExtender);
 
 		ContentBrowserModuleMenuExtender.Add(CustomCBMenuDelegate);*/
 
+
+		// Add custom delegate to all the exsinting delegates
 		ContentBrowserModuleMenuExtender.Add(FContentBrowserMenuExtender_SelectedPaths::
 			CreateRaw(this, &FSuperManagerModule::CustomCBMenuExtender));
 
 	}
 
+	// To define the position for inserting menu entry
 	TSharedRef<FExtender> FSuperManagerModule::CustomCBMenuExtender(const TArray<FString>& SelectedPaths)
 	{
 		TSharedRef<FExtender> MenuExtender(new FExtender());
@@ -46,9 +51,10 @@
 		{
 			MenuExtender->AddMenuExtension
 			(
-				FName("Delete"),
-				EExtensionHook::After, TSharedPtr<FUICommandList>(),
-				FMenuExtensionDelegate::CreateRaw(this, &FSuperManagerModule::AddCBMenuEntry)
+				FName("Delete"),	// Extension hook, position to insert menu entry
+				EExtensionHook::After, // Insert after the hook (or before)
+				TSharedPtr<FUICommandList>(),	// Custom hot keys
+				FMenuExtensionDelegate::CreateRaw(this, &FSuperManagerModule::AddCBMenuEntry)	//Second binding, will define all the details for this menuy entry
 			);
 
 			FolderPathsSelected = SelectedPaths;
@@ -56,15 +62,15 @@
 
 		return MenuExtender;
 	}
-
+	// Define details for the custom menu entry
 	void FSuperManagerModule::AddCBMenuEntry(FMenuBuilder& MenuBuilder)
 	{
 		MenuBuilder.AddMenuEntry
 		(
-			FText::FromString(TEXT("Delete Unused Assets")),
-			FText::FromString(TEXT("Safely delete all unused assets under folder")),
-			FSlateIcon(),
-			FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnDeleteUnusedAssetsButtonClicked)
+			FText::FromString(TEXT("Delete Unused Assets")), // Title text for menu entry
+			FText::FromString(TEXT("Safely delete all unused assets under folder")), // Tool tip text for menu entry
+			FSlateIcon(), // Custom icon for menu entry
+			FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnDeleteUnusedAssetsButtonClicked) // Binding for the action to be executed when menu entry is clicked
 		);
 	}
 
@@ -81,14 +87,16 @@
 		TArray<FString> AssetsPathNames =
 		UEditorAssetLibrary::ListAssets(FolderPathsSelected[0]);
 
+		// Whether there are assets under the folder 
 		if (AssetsPathNames.Num() == 0)
 		{
-			DebugHeader::ShowMessageDialog(EAppMsgType::Ok, TEXT("No assets found under selected folder"));
+			DebugHeader::ShowMessageDialog(EAppMsgType::Ok, TEXT("No assets found under selected folder"), false);
 			return;
 		}
 
 		EAppReturnType::Type ConfirmResult =
-			DebugHeader::ShowMessageDialog(EAppMsgType::YesNo, TEXT("A total of ") + FString::FromInt(AssetsPathNames.Num()) + TEXT(" found.\nWould you like to procceed?"));
+			DebugHeader::ShowMessageDialog(EAppMsgType::YesNo, TEXT("A total of ") + FString::FromInt(AssetsPathNames.Num()) 
+				+ TEXT(" assets need to be checked.\nWould you like to procceed?"));
 
 		if (ConfirmResult == EAppReturnType::No) return;
 
@@ -99,7 +107,7 @@
 		for (const FString& AssetPathName:AssetsPathNames)
 		{
 			//Don't touch root folder
-			if (AssetPathName.Contains(TEXT("Developers")) || AssetPathName.Contains(TEXT("Collections")))	//TODO: Change root folder definition, this can cause false positives
+			if (AssetPathName.Contains(TEXT("Developers")) || AssetPathName.Contains(TEXT("Collections")))	//TODO: Change root folder definition, this can cause false positives --> Contains()
 			{
 				DebugHeader::ShowMessageDialog(EAppMsgType::Ok, TEXT("Found illegal path name"));
 				continue;
@@ -117,6 +125,7 @@
 					continue;
 				}
 			}
+
 			// Check if we can do this in a better way (probably checking only AssetData only once and inside the AssetReferencers.Num()==0)
 			FAssetData AssetData = UEditorAssetLibrary::FindAssetData(AssetPathName);
 			if (AssetData.AssetClass == "EditorUtilityBlueprint")
