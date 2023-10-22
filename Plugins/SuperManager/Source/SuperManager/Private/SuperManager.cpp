@@ -1,11 +1,14 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SuperManager.h"
-//#include "BlutilityContentBrowserExtensions.h"
+#include "EditorWorldExtension.h" // Added include statement
 #include "ContentBrowserModule.h"
 #include "DebugHeader.h"
 #include "EditorAssetLibrary.h"
 #include "ObjectTools.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetToolsModule.h"
+
 
 #define LOCTEXT_NAMESPACE "FSuperManagerModule"
 
@@ -89,14 +92,38 @@
 
 		if (ConfirmResult == EAppReturnType::No) return;
 
+		FixUpRedirectors();
+
 		TArray<FAssetData> UnusedAssetsDataArray;
 
 		for (const FString& AssetPathName:AssetsPathNames)
 		{
 			//Don't touch root folder
-			if(AssetPathName.Contains(TEXT("Developers")) || AssetPathName.Contains(TEXT("Developers"))) continue;
+			if (AssetPathName.Contains(TEXT("Developers")) || AssetPathName.Contains(TEXT("Collections")))	//TODO: Change root folder definition, this can cause false positives
+			{
+				DebugHeader::ShowMessageDialog(EAppMsgType::Ok, TEXT("Found illegal path name"));
+				continue;
+			}
 
-			if (!UEditorAssetLibrary::DoesAssetExist(AssetPathName)) continue;
+			//Check if we can do this in a better way
+
+            if (!UEditorAssetLibrary::DoesAssetExist(AssetPathName)) continue;
+
+			if (UWorld* World = UEditorAssetLibrary::LoadAsset(AssetPathName)->GetWorld())
+			{
+				if (World->IsEditorWorld())
+				{
+					// The asset is a level, continue to the next iteration of the loop
+					continue;
+				}
+			}
+			// Check if we can do this in a better way (probably checking only AssetData only once and inside the AssetReferencers.Num()==0)
+			FAssetData AssetData = UEditorAssetLibrary::FindAssetData(AssetPathName);
+			if (AssetData.AssetClass == "EditorUtilityBlueprint")
+			{
+				// The asset is an editor utility blueprint, continue to the next iteration of the loop
+				continue;
+			}
 
 			TArray<FString> AssetReferencers =
 			UEditorAssetLibrary::FindPackageReferencersForAsset(AssetPathName);
@@ -111,12 +138,40 @@
 		if (UnusedAssetsDataArray.Num() > 0)
 		{
 			ObjectTools::DeleteAssets(UnusedAssetsDataArray, true);
-			return;
 		}
 		else 
 		{
 			DebugHeader::ShowMessageDialog(EAppMsgType::Ok, TEXT("No unused assets found under selected folder"));
 		}
+	}
+
+	void FSuperManagerModule::FixUpRedirectors()
+	{
+		TArray<UObjectRedirector*> RedirectorsToFixArray;
+
+		FAssetRegistryModule& AssetRegistryModule =
+			FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+
+		FARFilter Filter;
+		Filter.bRecursivePaths = true;
+		Filter.PackagePaths.Emplace(TEXT("/Game"));
+		Filter.ClassNames.Emplace("ObjectRedirector");
+
+		TArray<FAssetData> OutRedirectors;
+		AssetRegistryModule.Get().GetAssets(Filter, OutRedirectors);
+
+		for (const FAssetData& RedirectorData : OutRedirectors)
+		{
+			if (UObjectRedirector* RedirectorToFix = Cast<UObjectRedirector>(RedirectorData.GetAsset()))
+			{
+				RedirectorsToFixArray.Add(RedirectorToFix);
+			}
+		}
+
+		FAssetToolsModule& AssetToolsModule =
+			FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+
+		AssetToolsModule.Get().FixupReferencers(RedirectorsToFixArray);
 	}
 
 #pragma endregion
