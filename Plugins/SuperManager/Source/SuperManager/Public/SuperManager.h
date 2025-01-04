@@ -26,6 +26,8 @@ private:
 
 	void OnDeleteUnusedAssetsButtonClicked();
 
+	void OnDeleteEmptyFoldersButtonClicked();
+
 	void FixUpRedirectors();
 
 #pragma endregion

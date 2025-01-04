@@ -72,7 +72,75 @@
 			FSlateIcon(), // Custom icon for menu entry
 			FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnDeleteUnusedAssetsButtonClicked) // Binding for the action to be executed when menu entry is clicked
 		);
+
+		MenuBuilder.AddMenuEntry
+		(
+			FText::FromString(TEXT("Delete Empty Folders")), // Title text for menu entry 
+			FText::FromString(TEXT("Safely delete all empty folders")), // Tool tip text for menu entry
+			FSlateIcon(), // Custom icon for menu entry
+			FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnDeleteEmptyFoldersButtonClicked) // Binding for the action to be executed when menu entry is clicked
+			
+		);
 	}
+
+	void FSuperManagerModule::OnDeleteEmptyFoldersButtonClicked()
+	{
+		FixUpRedirectors();
+
+		TArray<FString> FolderPathsArray = UEditorAssetLibrary::ListAssets(FolderPathsSelected[0],true,true);
+		uint32 Counter = 0;
+
+		FString EmptyFolderPathsNames;
+		TArray<FString> EmptyFolderPathsArray;
+
+		for (const FString& FolderPath : FolderPathsArray)
+		{
+			if (FolderPath.Contains(TEXT("Developers"))
+				|| FolderPath.Contains(TEXT("Collections"))
+				|| FolderPath.Contains(TEXT("__ExternalActors__"))
+				|| FolderPath.Contains(TEXT("__ExternalObjects__")))
+			{
+
+			}
+
+			if(!UEditorAssetLibrary::DoesDirectoryExist(FolderPath)) continue;
+				
+			if (UEditorAssetLibrary::DoesDirectoryHaveAssets(FolderPath))
+			{
+				EmptyFolderPathsNames.Append(FolderPath + TEXT("\n"));
+				EmptyFolderPathsArray.Add(FolderPath);
+			}
+		}
+
+		if (EmptyFolderPathsArray.Num() == 0)
+		{
+			DebugHeader::ShowMessageDialog(EAppMsgType::Ok, TEXT("No empty folders found under selected folder"),false);
+			return;
+		}
+
+		EAppReturnType::Type ConfirmResult = DebugHeader::ShowMessageDialog(EAppMsgType::OkCancel,
+			TEXT("Empyty folders found in:\n") + EmptyFolderPathsNames + TEXT("\nWould you like to `delete all?"), false);
+
+		if(ConfirmResult == EAppReturnType::Cancel) return;
+
+		for (const FString& EmptyFolderPath : EmptyFolderPathsArray)
+		{
+			if (UEditorAssetLibrary::DeleteDirectory(EmptyFolderPath))
+			{
+				Counter++;
+			}
+			else
+			{
+				DebugHeader::Print(TEXT("Failed to delete " + EmptyFolderPath), FColor::Red);
+			}
+	
+		}
+		if (Counter > 0)
+		{
+			DebugHeader::ShowNotifyInfo(TEXT("Successfully deleted ") + FString::FromInt(Counter) + TEXT(" empty folders"));
+		}
+	}
+
 
 	void FSuperManagerModule::OnDeleteUnusedAssetsButtonClicked()
 	{
@@ -107,7 +175,11 @@
 		for (const FString& AssetPathName:AssetsPathNames)
 		{
 			//Don't touch root folder
-			if (AssetPathName.Contains(TEXT("Developers")) || AssetPathName.Contains(TEXT("Collections")))	//TODO: Change root folder definition, this can cause false positives --> Contains()
+			//TODO: Change root folder definition, this can cause false positives --> Contains()
+			if (AssetPathName.Contains(TEXT("Developers")) 
+				|| AssetPathName.Contains(TEXT("Collections"))	
+				|| AssetPathName.Contains(TEXT("__ExternalActors__"))
+				|| AssetPathName.Contains(TEXT("__ExternalObjects__")))
 			{
 				DebugHeader::ShowMessageDialog(EAppMsgType::Ok, TEXT("Found illegal path name"));
 				continue;
