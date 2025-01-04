@@ -38,7 +38,7 @@ private:
 
 	void RegistrerAdvancedDeletionTab();
 
-	TSharedRef<SDockTab, ESPMode::ThreadSafe> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab, ESPMode::ThreadSafe> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs);
 
 #pragma endregion
 };

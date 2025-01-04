@@ -282,7 +282,7 @@
 		.SetDisplayName(FText::FromString(TEXT("Advanced Deletion")));
 	}
 
-	TSharedRef<SDockTab, ESPMode::ThreadSafe> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& Args)
+	TSharedRef<SDockTab, ESPMode::ThreadSafe> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs)
 	{
 		return SNew(SDockTab)
 			.TabRole(ETabRole::NomadTab)
