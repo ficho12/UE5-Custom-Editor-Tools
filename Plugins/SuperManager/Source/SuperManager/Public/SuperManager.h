@@ -28,7 +28,17 @@ private:
 
 	void OnDeleteEmptyFoldersButtonClicked();
 
+	void OnAdvancedDeletionClicked();
+
 	void FixUpRedirectors();
+
+#pragma endregion
+
+#pragma region CustomEditorTab
+
+	void RegistrerAdvancedDeletionTab();
+
+	TSharedRef<SDockTab, ESPMode::ThreadSafe> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& Args);
 
 #pragma endregion
 };

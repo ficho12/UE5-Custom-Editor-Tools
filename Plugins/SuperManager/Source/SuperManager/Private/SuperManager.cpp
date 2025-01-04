@@ -81,6 +81,15 @@
 			FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnDeleteEmptyFoldersButtonClicked) // Binding for the action to be executed when menu entry is clicked
 			
 		);
+
+		MenuBuilder.AddMenuEntry
+		(
+			FText::FromString(TEXT("Advanced Deletion")), // Title text for menu entry 
+			FText::FromString(TEXT("List assets by specific condition in a tab for deleting")), // Tool tip text for menu entry
+			FSlateIcon(), // Custom icon for menu entry
+			FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnAdvancedDeletionClicked) // Binding for the action to be executed when menu entry is clicked
+
+		);
 	}
 
 	void FSuperManagerModule::OnDeleteEmptyFoldersButtonClicked()
@@ -226,6 +235,12 @@
 		}
 	}
 
+	void FSuperManagerModule::OnAdvancedDeletionClicked()
+	{
+		FGlobalTabmanager::Get()->TryInvokeTab(FName("AdvancedDeletion")); 
+	}
+
+
 	void FSuperManagerModule::FixUpRedirectors()
 	{
 		TArray<UObjectRedirector*> RedirectorsToFixArray;
@@ -255,9 +270,33 @@
 		AssetToolsModule.Get().FixupReferencers(RedirectorsToFixArray);
 	}
 
+
 #pragma endregion
 
+#pragma region CustomEditorTab
 
+	void FSuperManagerModule::RegistrerAdvancedDeletionTab()
+	{
+		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("AdvancedDeletion"),
+		FOnSpawnTab::CreateRaw(this, &FSuperManagerModule::OnSpawnAdvancedDeletionTab))
+		.SetDisplayName(FText::FromString(TEXT("Advanced Deletion")));
+	}
+
+	TSharedRef<SDockTab, ESPMode::ThreadSafe> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& Args)
+	{
+		return SNew(SDockTab)
+			.TabRole(ETabRole::NomadTab)
+			.Label(FText::FromString("Advanced Deletion"));
+	}
+
+	//TSharedRef<SDockTab, ESPMode::ThreadSafe> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& Args)
+	//{
+	//	return SNew(SDockTab)
+	//		.TabRole(ETabRole::NomadTab)
+	//		.Label(FText::FromString("Advanced Deletion"));
+	//}
+
+#pragma endregion
 	void FSuperManagerModule::ShutdownModule()
 	{
 		
