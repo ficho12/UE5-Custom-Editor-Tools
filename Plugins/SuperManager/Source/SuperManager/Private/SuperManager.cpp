@@ -8,6 +8,7 @@
 #include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
+#include "SlateWidgets/AdvancedDeletionWidget.h"
 
 
 #define LOCTEXT_NAMESPACE "FSuperManagerModule"
@@ -39,6 +40,8 @@
 		// Add custom delegate to all the exsinting delegates
 		ContentBrowserModuleMenuExtender.Add(FContentBrowserMenuExtender_SelectedPaths::
 			CreateRaw(this, &FSuperManagerModule::CustomCBMenuExtender));
+
+		RegistrerAdvancedDeletionTab();	
 
 	}
 
@@ -285,8 +288,11 @@
 	TSharedRef<SDockTab, ESPMode::ThreadSafe> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs)
 	{
 		return SNew(SDockTab)
-			.TabRole(ETabRole::NomadTab)
-			.Label(FText::FromString("Advanced Deletion"));
+		.TabRole(ETabRole::NomadTab)
+		[
+			SNew(SAdvanceDeletionTab)
+			.TestString(TEXT("I am passing data"))
+		];
 	}
 
 	//TSharedRef<SDockTab, ESPMode::ThreadSafe> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& Args)

@@ -4,12 +4,14 @@
 
 #include "Widgets/SCompoundWidget.h"
 
-class SAdvanceDeletionWidget : public SCompoundWidget
+class SAdvanceDeletionTab : public SCompoundWidget
 {
-	SLATE_BEGIN_ARGS(SAdvanceDeletionWidget){}
+public:
+
+	SLATE_BEGIN_ARGS(SAdvanceDeletionTab){}
+	SLATE_ARGUMENT(FString,TestString)
 	SLATE_END_ARGS()
 
-public:
 		void Construct(const FArguments& InArgs);
 };
 
